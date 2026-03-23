@@ -1,159 +1,459 @@
-const API_SIGNATURES = [
-    { name: "React", category: "Framework", check: () => !!(window.React || window.__REACT_DEVTOOLS_GLOBAL_HOOK__ || document.querySelector('[data-reactroot], [data-reactid]')), npm: "react", importSnippet: "import React from 'react';", docsUrl: "https://react.dev", cdnUrl: "https://unpkg.com/react@latest/umd/react.production.min.js" },
-  { name: "Vue.js", category: "Framework", check: () => !!(window.Vue || window.__VUE__ || document.querySelector('[data-v-app]')), npm: "vue", importSnippet: "import { createApp } from 'vue';", docsUrl: "https://vuejs.org", cdnUrl: "https://unpkg.com/vue@latest/dist/vue.global.prod.js" },
-  { name: "Angular", category: "Framework", check: () => !!(window.ng || window.angular || document.querySelector('[ng-version]')), npm: "@angular/core", importSnippet: "import { Component } from '@angular/core';", docsUrl: "https://angular.io", cdnUrl: null },
-  { name: "Svelte", category: "Framework", check: () => !!(window.__svelte || document.querySelector('[class*="svelte-"]')), npm: "svelte", importSnippet: "import App from './App.svelte';", docsUrl: "https://svelte.dev", cdnUrl: null },
-  { name: "Next.js", category: "Framework", check: () => !!(window.__NEXT_DATA__ || window.next), npm: "next", importSnippet: "import { NextPage } from 'next';", docsUrl: "https://nextjs.org", cdnUrl: null },
-  { name: "Nuxt.js", category: "Framework", check: () => !!(window.__NUXT__ || window.$nuxt), npm: "nuxt", importSnippet: "import { defineNuxtConfig } from 'nuxt/config';", docsUrl: "https://nuxt.com", cdnUrl: null },
+(function() {
+  'use strict';
  
-  // UI Libraries
-  { name: "jQuery", category: "Library", check: () => !!(window.jQuery || window.$?.fn?.jquery), npm: "jquery", importSnippet: "import $ from 'jquery';", docsUrl: "https://jquery.com", cdnUrl: "https://code.jquery.com/jquery-3.7.1.min.js" },
-  { name: "Bootstrap", category: "UI Library", check: () => !!(window.bootstrap || document.querySelector('link[href*="bootstrap"]')), npm: "bootstrap", importSnippet: "import 'bootstrap/dist/css/bootstrap.min.css';", docsUrl: "https://getbootstrap.com", cdnUrl: "https://cdn.jsdelivr.net/npm/bootstrap@5/dist/css/bootstrap.min.css" },
-  { name: "Tailwind CSS", category: "UI Library", check: () => !!(document.querySelector('[class*="tailwind"]') || Array.from(document.styleSheets).some(s => { try { return Array.from(s.cssRules || []).some(r => r.cssText?.includes('--tw-')); } catch(e) { return false; } })), npm: "tailwindcss", importSnippet: "// Add to HTML: <script src='https://cdn.tailwindcss.com'></script>", docsUrl: "https://tailwindcss.com", cdnUrl: "https://cdn.tailwindcss.com" },
-  { name: "Material UI", category: "UI Library", check: () => !!(window.MaterialUI || document.querySelector('[class*="MuiBox"], [class*="MuiButton"]')), npm: "@mui/material", importSnippet: "import Button from '@mui/material/Button';", docsUrl: "https://mui.com", cdnUrl: null },
-  { name: "Chakra UI", category: "UI Library", check: () => !!(document.querySelector('[data-theme*="chakra"], [class*="chakra-"]')), npm: "@chakra-ui/react", importSnippet: "import { ChakraProvider } from '@chakra-ui/react';", docsUrl: "https://chakra-ui.com", cdnUrl: null },
-  { name: "Ant Design", category: "UI Library", check: () => !!(document.querySelector('[class*="ant-btn"], [class*="ant-"]')), npm: "antd", importSnippet: "import { Button } from 'antd';", docsUrl: "https://ant.design", cdnUrl: null },
+  let hudActive = false;
+  let hudRoot = null;
+  let clockInterval = null;
+  let statsInterval = null;
+  let logInterval = null;
+  let crosshairVisible = false;
  
-  // Data & State Management
-  { name: "Redux", category: "State Management", check: () => !!(window.__REDUX_DEVTOOLS_EXTENSION__ || window.Redux || document.querySelector('[data-redux-store]')), npm: "redux", importSnippet: "import { createStore } from 'redux';", docsUrl: "https://redux.js.org", cdnUrl: "https://unpkg.com/redux@latest/dist/redux.min.js" },
-  { name: "MobX", category: "State Management", check: () => !!(window.mobx || window.MobX), npm: "mobx", importSnippet: "import { makeObservable, observable } from 'mobx';", docsUrl: "https://mobx.js.org", cdnUrl: null },
-  { name: "Zustand", category: "State Management", check: () => !!(window.__zustand), npm: "zustand", importSnippet: "import { create } from 'zustand';", docsUrl: "https://zustand-demo.pmnd.rs", cdnUrl: null },
+  
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'EVA_TOGGLE') {
+      if (hudActive) {
+        deactivateHUD();
+      } else {
+        activateHUD();
+      }
+    }
+  });
  
-  // HTTP & API Clients
-  { name: "Axios", category: "HTTP Client", check: () => !!(window.axios), npm: "axios", importSnippet: "import axios from 'axios';", docsUrl: "https://axios-http.com", cdnUrl: "https://unpkg.com/axios/dist/axios.min.js" },
-  { name: "GraphQL", category: "API", check: () => !!(window.__APOLLO_CLIENT__ || window.graphql || document.querySelector('[data-apollo]')), npm: "graphql", importSnippet: "import { gql } from 'graphql-tag';", docsUrl: "https://graphql.org", cdnUrl: null },
-  { name: "Apollo Client", category: "API Client", check: () => !!(window.__APOLLO_CLIENT__ || window.ApolloClient), npm: "@apollo/client", importSnippet: "import { ApolloClient, InMemoryCache } from '@apollo/client';", docsUrl: "https://www.apollographql.com/docs/react", cdnUrl: null },
-  { name: "SWR", category: "Data Fetching", check: () => !!(window.__SWR_DEVTOOLS_USE__), npm: "swr", importSnippet: "import useSWR from 'swr';", docsUrl: "https://swr.vercel.app", cdnUrl: null },
-  { name: "React Query", category: "Data Fetching", check: () => !!(window.__REACT_QUERY_DEVTOOLS_GLOBAL__), npm: "@tanstack/react-query", importSnippet: "import { useQuery } from '@tanstack/react-query';", docsUrl: "https://tanstack.com/query", cdnUrl: null },
+  
+  if (window.__EVA_LOADED) {
+    if (hudActive) deactivateHUD(); else activateHUD();
+  }
+  window.__EVA_LOADED = true;
  
-  // Charts & Visualization
-  { name: "Chart.js", category: "Data Viz", check: () => !!(window.Chart), npm: "chart.js", importSnippet: "import { Chart } from 'chart.js';", docsUrl: "https://www.chartjs.org", cdnUrl: "https://cdn.jsdelivr.net/npm/chart.js" },
-  { name: "D3.js", category: "Data Viz", check: () => !!(window.d3), npm: "d3", importSnippet: "import * as d3 from 'd3';", docsUrl: "https://d3js.org", cdnUrl: "https://d3js.org/d3.v7.min.js" },
-  { name: "Highcharts", category: "Data Viz", check: () => !!(window.Highcharts), npm: "highcharts", importSnippet: "import Highcharts from 'highcharts';", docsUrl: "https://www.highcharts.com", cdnUrl: "https://code.highcharts.com/highcharts.js" },
-  { name: "Three.js", category: "3D/WebGL", check: () => !!(window.THREE), npm: "three", importSnippet: "import * as THREE from 'three';", docsUrl: "https://threejs.org", cdnUrl: "https://unpkg.com/three@latest/build/three.min.js" },
+  function activateHUD() {
+    if (hudActive) return;
+    hudActive = true;
  
-  // Analytics & Tracking
-  { name: "Google Analytics", category: "Analytics", check: () => !!(window.ga || window.gtag || window.dataLayer), npm: null, importSnippet: "<!-- In <head>: -->\n<script async src='https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID'></script>", docsUrl: "https://analytics.google.com", cdnUrl: null },
-  { name: "Segment", category: "Analytics", check: () => !!(window.analytics?.track), npm: "@segment/analytics-next", importSnippet: "import { AnalyticsBrowser } from '@segment/analytics-next';", docsUrl: "https://segment.com/docs", cdnUrl: null },
-  { name: "Hotjar", category: "Analytics", check: () => !!(window.hj || window._hjSettings), npm: null, importSnippet: "// Via script tag only (no npm package)\n// See: https://hotjar.com/install", docsUrl: "https://help.hotjar.com", cdnUrl: null },
-  { name: "Mixpanel", category: "Analytics", check: () => !!(window.mixpanel), npm: "mixpanel-browser", importSnippet: "import mixpanel from 'mixpanel-browser';", docsUrl: "https://docs.mixpanel.com", cdnUrl: null },
+    
+    hudRoot = document.createElement('div');
+    hudRoot.id = 'nerv-hud-root';
+    document.body.appendChild(hudRoot);
  
-  // Payments
-  { name: "Stripe", category: "Payments", check: () => !!(window.Stripe), npm: "@stripe/stripe-js", importSnippet: "import { loadStripe } from '@stripe/stripe-js';", docsUrl: "https://stripe.com/docs", cdnUrl: "https://js.stripe.com/v3/" },
-  { name: "PayPal SDK", category: "Payments", check: () => !!(window.paypal), npm: "@paypal/react-paypal-js", importSnippet: "import { PayPalButtons } from '@paypal/react-paypal-js';", docsUrl: "https://developer.paypal.com", cdnUrl: null },
+    hudRoot.innerHTML = buildHUDMarkup();
  
-  // Auth
-  { name: "Firebase", category: "Backend/Auth", check: () => !!(window.firebase || window.__FIREBASE_APP__), npm: "firebase", importSnippet: "import { initializeApp } from 'firebase/app';", docsUrl: "https://firebase.google.com/docs", cdnUrl: null },
-  { name: "Auth0", category: "Auth", check: () => !!(window.auth0), npm: "@auth0/auth0-react", importSnippet: "import { Auth0Provider } from '@auth0/auth0-react';", docsUrl: "https://auth0.com/docs", cdnUrl: null },
-  { name: "Supabase", category: "Backend/Auth", check: () => !!(window.supabase), npm: "@supabase/supabase-js", importSnippet: "import { createClient } from '@supabase/supabase-js';", docsUrl: "https://supabase.com/docs", cdnUrl: null },
+    
+    startClock();
+    startStats();
+    startLog();
+    setupCrosshair();
  
-  // Animation
-  { name: "GSAP", category: "Animation", check: () => !!(window.gsap || window.TweenMax || window.TweenLite), npm: "gsap", importSnippet: "import gsap from 'gsap';", docsUrl: "https://greensock.com/gsap", cdnUrl: "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" },
-  { name: "Framer Motion", category: "Animation", check: () => !!(window.FramerMotion), npm: "framer-motion", importSnippet: "import { motion } from 'framer-motion';", docsUrl: "https://www.framer.com/motion", cdnUrl: null },
-  { name: "Anime.js", category: "Animation", check: () => !!(window.anime), npm: "animejs", importSnippet: "import anime from 'animejs';", docsUrl: "https://animejs.com", cdnUrl: "https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" },
+    // Add body padding so content isn't fully hidden
+    document.documentElement.style.cssText += 'padding-top: 50px !important; padding-bottom: 44px !important;';
+  }
  
-  // Build Tools / Runtime hints
-  { name: "Webpack", category: "Build Tool", check: () => !!(window.webpackChunk || window.webpackJsonp || Object.keys(window).some(k => k.startsWith('webpackChunk'))), npm: "webpack", importSnippet: "// webpack.config.js\nconst path = require('path');\nmodule.exports = { entry: './src/index.js' };", docsUrl: "https://webpack.js.org", cdnUrl: null },
-  { name: "Vite", category: "Build Tool", check: () => !!(window.__vite_plugin_react_preamble_installed__ || document.querySelector('script[type="module"][src*="@vite"]')), npm: "vite", importSnippet: "// vite.config.js\nimport { defineConfig } from 'vite';\nexport default defineConfig({});", docsUrl: "https://vitejs.dev", cdnUrl: null },
+  function deactivateHUD() {
+    if (!hudActive) return;
+    hudActive = false;
  
-  // Maps
-  { name: "Google Maps", category: "Maps", check: () => !!(window.google?.maps), npm: "@googlemaps/js-api-loader", importSnippet: "import { Loader } from '@googlemaps/js-api-loader';", docsUrl: "https://developers.google.com/maps", cdnUrl: null },
-  { name: "Leaflet", category: "Maps", check: () => !!(window.L?.map), npm: "leaflet", importSnippet: "import L from 'leaflet';", docsUrl: "https://leafletjs.com", cdnUrl: "https://unpkg.com/leaflet@latest/dist/leaflet.js" },
-  { name: "Mapbox GL", category: "Maps", check: () => !!(window.mapboxgl), npm: "mapbox-gl", importSnippet: "import mapboxgl from 'mapbox-gl';", docsUrl: "https://docs.mapbox.com", cdnUrl: null },
+    if (hudRoot) {
+      hudRoot.style.animation = 'none';
+      hudRoot.style.opacity = '0';
+      hudRoot.style.transition = 'opacity 0.5s ease';
+      setTimeout(() => {
+        if (hudRoot) hudRoot.remove();
+        hudRoot = null;
+      }, 500);
+    }
  
-  // Misc
-  { name: "Lodash", category: "Utility", check: () => !!(window._?.VERSION || window.lodash), npm: "lodash", importSnippet: "import _ from 'lodash';", docsUrl: "https://lodash.com", cdnUrl: "https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js" },
-  { name: "Moment.js", category: "Date/Time", check: () => !!(window.moment), npm: "moment", importSnippet: "import moment from 'moment';", docsUrl: "https://momentjs.com", cdnUrl: "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js" },
-  { name: "Day.js", category: "Date/Time", check: () => !!(window.dayjs), npm: "dayjs", importSnippet: "import dayjs from 'dayjs';", docsUrl: "https://day.js.org", cdnUrl: "https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js" },
-  { name: "Socket.IO", category: "Real-time", check: () => !!(window.io?.protocol), npm: "socket.io-client", importSnippet: "import { io } from 'socket.io-client';", docsUrl: "https://socket.io/docs", cdnUrl: null },
-  { name: "Sentry", category: "Monitoring", check: () => !!(window.Sentry || window.__sentryRewriteFrames), npm: "@sentry/browser", importSnippet: "import * as Sentry from '@sentry/browser';\nSentry.init({ dsn: 'YOUR_DSN' });", docsUrl: "https://docs.sentry.io", cdnUrl: null },
-  { name: "Intercom", category: "Support", check: () => !!(window.Intercom), npm: "@intercom/messenger-js-sdk", importSnippet: "import Intercom from '@intercom/messenger-js-sdk';", docsUrl: "https://developers.intercom.com", cdnUrl: null },
-  { name: "Crisp Chat", category: "Support", check: () => !!(window.$crisp), npm: null, importSnippet: "// Script tag only:\nwindow.$crisp=[];\nwindow.CRISP_WEBSITE_ID='YOUR_ID';", docsUrl: "https://docs.crisp.chat", cdnUrl: null },
-  { name: "Algolia", category: "Search", check: () => !!(window.algoliasearch || document.querySelector('[class*="ais-"]')), npm: "algoliasearch", importSnippet: "import algoliasearch from 'algoliasearch';", docsUrl: "https://www.algolia.com/doc", cdnUrl: null },
-  { name: "Cloudinary", category: "Media", check: () => !!(window.cloudinary || document.querySelector('img[src*="cloudinary.com"]')), npm: "cloudinary-core", importSnippet: "import { Cloudinary } from '@cloudinary/url-gen';", docsUrl: "https://cloudinary.com/documentation", cdnUrl: null },
-  { name: "Twilio", category: "Communications", check: () => !!(window.Twilio), npm: "twilio", importSnippet: "const twilio = require('twilio');\nconst client = twilio(accountSid, authToken);", docsUrl: "https://www.twilio.com/docs", cdnUrl: null },
-  { name: "Plyr", category: "Media Player", check: () => !!(window.Plyr || document.querySelector('.plyr')), npm: "plyr", importSnippet: "import Plyr from 'plyr';", docsUrl: "https://plyr.io", cdnUrl: "https://cdn.plyr.io/3.7.8/plyr.js" },
-  { name: "Video.js", category: "Media Player", check: () => !!(window.videojs), npm: "video.js", importSnippet: "import videojs from 'video.js';", docsUrl: "https://videojs.com", cdnUrl: null },
-
-
-];
-
-function detectFromScripts() {
-    const detected = []
-    const scripts = Array.from(document.querySelectorAll("script[src]"));
-    const links = Array.from(document.querySelectorAll("link[href]"));
-    const allSrcs = [...scripts.map( s => s.src), ...links.map(l => l.href)];
-
-
-    const patterns = [
-        { pattern: /react[\.\-]/, name: "React (CDN)", category: "Framework", npm: "react", importSnippet: "import React from 'react';", docsUrl: "https://react.dev", cdnUrl: "https://unpkg.com/react@latest/umd/react.production.min.js" },
-    { pattern: /vue[\.\-]/, name: "Vue.js (CDN)", category: "Framework", npm: "vue", importSnippet: "import { createApp } from 'vue';", docsUrl: "https://vuejs.org", cdnUrl: "https://unpkg.com/vue@latest/dist/vue.global.prod.js" },
-    { pattern: /jquery[\.\-]/, name: "jQuery (CDN)", category: "Library", npm: "jquery", importSnippet: "import $ from 'jquery';", docsUrl: "https://jquery.com", cdnUrl: "https://code.jquery.com/jquery-3.7.1.min.js" },
-    { pattern: /bootstrap[\.\-]/, name: "Bootstrap (CDN)", category: "UI Library", npm: "bootstrap", importSnippet: "import 'bootstrap/dist/css/bootstrap.min.css';", docsUrl: "https://getbootstrap.com", cdnUrl: "https://cdn.jsdelivr.net/npm/bootstrap@5/dist/css/bootstrap.min.css" },
-    { pattern: /tailwind/, name: "Tailwind CSS (CDN)", category: "UI Library", npm: "tailwindcss", importSnippet: "<script src='https://cdn.tailwindcss.com'></script>", docsUrl: "https://tailwindcss.com", cdnUrl: "https://cdn.tailwindcss.com" },
-    { pattern: /gsap|greensock/, name: "GSAP (CDN)", category: "Animation", npm: "gsap", importSnippet: "import gsap from 'gsap';", docsUrl: "https://greensock.com/gsap", cdnUrl: "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" },
-    { pattern: /three[\.\-]/, name: "Three.js (CDN)", category: "3D/WebGL", npm: "three", importSnippet: "import * as THREE from 'three';", docsUrl: "https://threejs.org", cdnUrl: "https://unpkg.com/three@latest/build/three.min.js" },
-    { pattern: /chart[\.\-]js/, name: "Chart.js (CDN)", category: "Data Viz", npm: "chart.js", importSnippet: "import { Chart } from 'chart.js';", docsUrl: "https://www.chartjs.org", cdnUrl: "https://cdn.jsdelivr.net/npm/chart.js" },
-    { pattern: /stripe/, name: "Stripe (CDN)", category: "Payments", npm: "@stripe/stripe-js", importSnippet: "import { loadStripe } from '@stripe/stripe-js';", docsUrl: "https://stripe.com/docs", cdnUrl: "https://js.stripe.com/v3/" },
-    { pattern: /firebase/, name: "Firebase (CDN)", category: "Backend/Auth", npm: "firebase", importSnippet: "import { initializeApp } from 'firebase/app';", docsUrl: "https://firebase.google.com/docs", cdnUrl: null },
-    { pattern: /maps\.googleapis/, name: "Google Maps", category: "Maps", npm: "@googlemaps/js-api-loader", importSnippet: "import { Loader } from '@googlemaps/js-api-loader';", docsUrl: "https://developers.google.com/maps", cdnUrl: null },
-    { pattern: /leaflet/, name: "Leaflet", category: "Maps", npm: "leaflet", importSnippet: "import L from 'leaflet';", docsUrl: "https://leafletjs.com", cdnUrl: "https://unpkg.com/leaflet@latest/dist/leaflet.js" },
-    { pattern: /sentry/, name: "Sentry", category: "Monitoring", npm: "@sentry/browser", importSnippet: "import * as Sentry from '@sentry/browser';", docsUrl: "https://docs.sentry.io", cdnUrl: null },
-    { pattern: /gtag|analytics/, name: "Google Analytics", category: "Analytics", npm: null, importSnippet: "<script async src='https://www.googletagmanager.com/gtag/js?id=GA_ID'></script>", docsUrl: "https://analytics.google.com", cdnUrl: null },
-    { pattern: /intercom/, name: "Intercom", category: "Support", npm: "@intercom/messenger-js-sdk", importSnippet: "import Intercom from '@intercom/messenger-js-sdk';", docsUrl: "https://developers.intercom.com", cdnUrl: null },
-    { pattern: /socket\.io/, name: "Socket.IO", category: "Real-time", npm: "socket.io-client", importSnippet: "import { io } from 'socket.io-client';", docsUrl: "https://socket.io/docs", cdnUrl: null },
-    { pattern: /d3[\.\-]/, name: "D3.js (CDN)", category: "Data Viz", npm: "d3", importSnippet: "import * as d3 from 'd3';", docsUrl: "https://d3js.org", cdnUrl: "https://d3js.org/d3.v7.min.js" },
-    { pattern: /mapbox/, name: "Mapbox GL", category: "Maps", npm: "mapbox-gl", importSnippet: "import mapboxgl from 'mapbox-gl';", docsUrl: "https://docs.mapbox.com", cdnUrl: null },
-    { pattern: /cloudinary/, name: "Cloudinary", category: "Media", npm: "cloudinary-core", importSnippet: "import { Cloudinary } from '@cloudinary/url-gen';", docsUrl: "https://cloudinary.com/documentation", cdnUrl: null },
+    clearInterval(clockInterval);
+    clearInterval(statsInterval);
+    clearInterval(logInterval);
+ 
+    document.documentElement.style.paddingTop = '';
+    document.documentElement.style.paddingBottom = '';
+  }
+ 
+  function buildHUDMarkup() {
+    const nervMessages = getTickerMessages();
+ 
+    return `
+      <!-- Warning flash layer -->
+      <div id="nerv-warning-flash"></div>
+ 
+      <!-- Corner decorations -->
+      <div class="nerv-corner" id="nerv-corner-tl"></div>
+      <div class="nerv-corner" id="nerv-corner-tr"></div>
+      <div class="nerv-corner" id="nerv-corner-bl"></div>
+      <div class="nerv-corner" id="nerv-corner-br"></div>
+ 
+      <!-- Frame grid lines -->
+      <div id="nerv-frame-lines">
+        <div class="nerv-frame-line h" style="top: 33%"></div>
+        <div class="nerv-frame-line h" style="top: 66%"></div>
+        <div class="nerv-frame-line v" style="left: 220px"></div>
+        <div class="nerv-frame-line v" style="right: 220px"></div>
+      </div>
+ 
+      <!-- Close button -->
+      <button id="nerv-close-btn" title="Deactivate NERV HUD">× TERMINATE</button>
+ 
+      <!-- HEADER BAR -->
+      <div id="nerv-header">
+        <div class="nerv-brand">
+          <svg class="nerv-logo-svg" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="18,2 34,30 2,30" fill="none" stroke="#FF6600" stroke-width="1.5"/>
+            <polygon points="18,8 30,28 6,28" fill="none" stroke="#CC4400" stroke-width="0.5" opacity="0.6"/>
+            <line x1="18" y1="2" x2="18" y2="30" stroke="#FF6600" stroke-width="0.5" opacity="0.5"/>
+            <circle cx="18" cy="18" r="5" fill="#FF6600" opacity="0.7"/>
+            <circle cx="18" cy="18" r="2.5" fill="#FF4400"/>
+          </svg>
+          <span class="nerv-wordmark">NERV</span>
+        </div>
+ 
+        <div class="nerv-header-divider"></div>
+ 
+        <div class="nerv-header-data">
+          <div class="nerv-data-item">
+            <span class="nerv-data-label">PILOT</span>
+            <span class="nerv-data-value">IKARI·S</span>
+          </div>
+          <div class="nerv-data-item">
+            <span class="nerv-data-label">UNIT</span>
+            <span class="nerv-data-value">EVA-01</span>
+          </div>
+          <div class="nerv-data-item">
+            <span class="nerv-data-label">MAGI STATUS</span>
+            <span class="nerv-data-value green">3/3 ONLINE</span>
+          </div>
+          <div class="nerv-data-item">
+            <span class="nerv-data-label">PATTERN</span>
+            <span class="nerv-data-value green" id="nerv-pattern">BLUE: NEG</span>
+          </div>
+          <div class="nerv-data-item">
+            <span class="nerv-data-label">ALERT LVL</span>
+            <span class="nerv-data-value" id="nerv-alert-level">STANDBY</span>
+          </div>
+        </div>
+ 
+        <div class="nerv-header-right">
+          <div>
+            <div class="nerv-date" id="nerv-date">AD 2015-09-13</div>
+            <div class="nerv-time" id="nerv-time">00:00:00</div>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- LEFT PANEL -->
+      <div id="nerv-panel-left">
+ 
+        <!-- Sync Ratio Panel -->
+        <div class="nerv-panel nerv-panel-tl">
+          <div class="nerv-panel-title">▶ SYNCHRONIZATION</div>
+          <div class="nerv-sync-display">
+            <span class="nerv-sync-number" id="nerv-sync">00</span><span class="nerv-sync-unit">%</span>
+            <span class="nerv-sync-label">SYNC RATIO</span>
+          </div>
+          <div class="nerv-bar-container">
+            <div class="nerv-bar-row">
+              <span class="nerv-bar-label">L·ARM</span>
+              <div class="nerv-bar-track"><div class="nerv-bar-fill orange" id="nerv-bar-larm" style="width:85%"></div></div>
+              <span class="nerv-bar-val" id="nerv-val-larm">85</span>
+            </div>
+            <div class="nerv-bar-row">
+              <span class="nerv-bar-label">R·ARM</span>
+              <div class="nerv-bar-track"><div class="nerv-bar-fill orange" id="nerv-bar-rarm" style="width:82%"></div></div>
+              <span class="nerv-bar-val" id="nerv-val-rarm">82</span>
+            </div>
+            <div class="nerv-bar-row">
+              <span class="nerv-bar-label">CORE</span>
+              <div class="nerv-bar-track"><div class="nerv-bar-fill green" id="nerv-bar-core" style="width:91%"></div></div>
+              <span class="nerv-bar-val" id="nerv-val-core">91</span>
+            </div>
+            <div class="nerv-bar-row">
+              <span class="nerv-bar-label">A·FIELD</span>
+              <div class="nerv-bar-track"><div class="nerv-bar-fill yellow" id="nerv-bar-af" style="width:45%"></div></div>
+              <span class="nerv-bar-val" id="nerv-val-af">45</span>
+            </div>
+          </div>
+        </div>
+ 
+        <!-- Unit Status Panel -->
+        <div class="nerv-panel nerv-panel-bl">
+          <div class="nerv-panel-title">▶ UNIT-01 STATUS</div>
+          <div class="nerv-status-list">
+            <div class="nerv-status-row">
+              <span class="nerv-status-name">NEURAL LINK</span>
+              <span class="nerv-status-val ok" id="st-neural">ACTIVE</span>
+            </div>
+            <div class="nerv-status-row">
+              <span class="nerv-status-name">LCL PRESSURE</span>
+              <span class="nerv-status-val ok">NOMINAL</span>
+            </div>
+            <div class="nerv-status-row">
+              <span class="nerv-status-name">POWER SUPPLY</span>
+              <span class="nerv-status-val ok" id="st-power">INTERNAL</span>
+            </div>
+            <div class="nerv-status-row">
+              <span class="nerv-status-name">AT FIELD</span>
+              <span class="nerv-status-val active" id="st-atfield">DEPLOYED</span>
+            </div>
+            <div class="nerv-status-row">
+              <span class="nerv-status-name">PROG KNIFE</span>
+              <span class="nerv-status-val ok">STOWED</span>
+            </div>
+            <div class="nerv-status-row">
+              <span class="nerv-status-name">CORE TEMP</span>
+              <span class="nerv-status-val ok" id="st-temp">36.6°C</span>
+            </div>
+          </div>
+        </div>
+ 
+      </div>
+ 
+      <!-- RIGHT PANEL -->
+      <div id="nerv-panel-right">
+ 
+        <!-- Threat Scanner -->
+        <div class="nerv-panel nerv-panel-tr">
+          <div class="nerv-panel-title">▶ ANGEL SCAN // TACTICAL</div>
+          <div class="nerv-threat-display">
+            <div class="nerv-threat-ring">
+              <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(107,0,107,0.4)" stroke-width="0.5"/>
+                <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(107,0,107,0.6)" stroke-width="0.5" stroke-dasharray="4 4"/>
+                <circle cx="40" cy="40" r="20" fill="none" stroke="rgba(107,0,107,0.5)" stroke-width="0.5"/>
+                <circle cx="40" cy="40" r="12" fill="none" stroke="rgba(255,102,0,0.4)" stroke-width="0.5"/>
+                <line x1="40" y1="4" x2="40" y2="76" stroke="rgba(107,0,107,0.3)" stroke-width="0.5"/>
+                <line x1="4" y1="40" x2="76" y2="40" stroke="rgba(107,0,107,0.3)" stroke-width="0.5"/>
+                <polygon points="40,6 43,12 40,11 37,12" fill="rgba(255,102,0,0.6)" stroke="none"/>
+              </svg>
+              <div class="nerv-threat-center">
+                <span class="nerv-threat-level" id="nerv-threat">CLEAR</span>
+                <span class="nerv-threat-text">ANGEL SCAN</span>
+              </div>
+            </div>
+          </div>
+          <div class="nerv-hex-grid">
+            <div class="nerv-hex"><span class="nerv-hex-val" id="hex-0">A4F2</span><span class="nerv-hex-label">SIG</span></div>
+            <div class="nerv-hex"><span class="nerv-hex-val" id="hex-1">3C1A</span><span class="nerv-hex-label">PAT</span></div>
+            <div class="nerv-hex"><span class="nerv-hex-val" id="hex-2">FF00</span><span class="nerv-hex-label">SRC</span></div>
+            <div class="nerv-hex"><span class="nerv-hex-val" id="hex-3">0044</span><span class="nerv-hex-label">AMP</span></div>
+            <div class="nerv-hex"><span class="nerv-hex-val" id="hex-4">B7E3</span><span class="nerv-hex-label">LOC</span></div>
+            <div class="nerv-hex"><span class="nerv-hex-val" id="hex-5">29FF</span><span class="nerv-hex-label">VEC</span></div>
+            <div class="nerv-hex"><span class="nerv-hex-val" id="hex-6">8A0C</span><span class="nerv-hex-label">MAG</span></div>
+            <div class="nerv-hex"><span class="nerv-hex-val" id="hex-7">1D3E</span><span class="nerv-hex-label">TRK</span></div>
+          </div>
+        </div>
+ 
+        <!-- Mission Log -->
+        <div class="nerv-panel nerv-panel-br">
+          <div class="nerv-panel-title">▶ OPERATIONS LOG</div>
+          <div class="nerv-log" id="nerv-log">
+            <div class="nerv-log-line ok"><span>▶</span><span>MAGI SYSTEM INITIALIZED</span></div>
+            <div class="nerv-log-line"><span>▶</span><span>UNIT-01 NEURAL CONNECT</span></div>
+            <div class="nerv-log-line ok"><span>▶</span><span>SYNC RATIO NOMINAL</span></div>
+            <div class="nerv-log-line"><span>▶</span><span>ALL SYSTEMS OPERATIONAL</span></div>
+            <div class="nerv-log-line"><span>▶</span><span>STANDBY FOR DEPLOYMENT<span style="display:inline-block;width:5px;height:9px;background:#00FF41;margin-left:3px;animation:eva-blink 1s step-end infinite;vertical-align:middle"></span></span></div>
+          </div>
+        </div>
+ 
+      </div>
+ 
+      <!-- FOOTER BAR -->
+      <div id="nerv-footer">
+        <div class="nerv-ticker">
+          <div class="nerv-ticker-inner">
+            ${nervMessages}
+            ${nervMessages}
+          </div>
+        </div>
+        <div class="nerv-footer-stats">
+          <div class="nerv-footer-stat">
+            <span class="nerv-footer-stat-label">PILOTS</span>
+            <span class="nerv-footer-stat-val">03</span>
+          </div>
+          <div class="nerv-footer-stat">
+            <span class="nerv-footer-stat-label">UNITS</span>
+            <span class="nerv-footer-stat-val">05</span>
+          </div>
+          <div class="nerv-footer-stat">
+            <span class="nerv-footer-stat-label">ANGELS</span>
+            <span class="nerv-footer-stat-val" id="nerv-angel-count">17</span>
+          </div>
+          <div class="nerv-footer-stat">
+            <span class="nerv-footer-stat-label">DEFEATED</span>
+            <span class="nerv-footer-stat-val" id="nerv-defeated">14</span>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- Crosshair -->
+      <div id="nerv-crosshair">
+        <svg class="nerv-crosshair-svg" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,102,0,0.6)" stroke-width="0.5"/>
+          <circle cx="20" cy="20" r="12" fill="none" stroke="rgba(255,102,0,0.4)" stroke-width="0.5" stroke-dasharray="3 3"/>
+          <circle cx="20" cy="20" r="3" fill="rgba(255,102,0,0.8)"/>
+          <line x1="20" y1="2" x2="20" y2="38" stroke="rgba(255,102,0,0.4)" stroke-width="0.5"/>
+          <line x1="2" y1="20" x2="38" y2="20" stroke="rgba(255,102,0,0.4)" stroke-width="0.5"/>
+          <polygon points="20,2 21.5,6 20,5 18.5,6" fill="rgba(255,102,0,0.8)"/>
+        </svg>
+      </div>
+    `;
+  }
+ 
+  function getTickerMessages() {
+    const items = [
+      ['NERV SPECIAL AGENCY // GEOFRONT HEADQUARTERS', 'highlight'],
+      ['EVANGELION UNIT-01 OPERATIONAL STATUS: ACTIVE', ''],
+      ['MAGI-01 CASPAR: ONLINE', ''],
+      ['MAGI-02 BALTHASAR: ONLINE', ''],
+      ['MAGI-03 MELCHIOR: ONLINE', ''],
+      ['AT FIELD NEUTRALIZATION PROTOCOL: READY', ''],
+      ['CLASSIFIED: DEAD SEA SCROLLS REFERENCE 04-A', ''],
+      ['PATTERN BLUE SCAN: NEGATIVE CONTACT', ''],
+      ['LANCE OF LONGINUS: LOCATION UNKNOWN', 'highlight'],
+      ['SEELE COUNCIL: MONITORING', ''],
+      ['PILOT SYNC RATIO EXCEEDS THRESHOLD', ''],
+      ['THIRD IMPACT PREVENTION ACTIVE', 'highlight'],
+      ['ALL EVANGELION UNITS AT READINESS', ''],
+      ['UMBILICAL CABLE CONNECTION: STABLE', ''],
     ];
-
-    for(const src of allSrcs){
-        for(const p of patterns){
-            if(p.pattern.test(src)){
-                detected.push(p);
-            }
+    return items.map(([text, cls]) =>
+      `<span class="nerv-ticker-item ${cls}">▶ ${text}</span>`
+    ).join('');
+  }
+ 
+  function startClock() {
+    const update = () => {
+      const now = new Date();
+      const timeEl = document.getElementById('nerv-time');
+      const dateEl = document.getElementById('nerv-date');
+      if (timeEl) {
+        timeEl.textContent = now.toTimeString().slice(0, 8);
+      }
+      if (dateEl) {
+        const y = 2015; // Eva year
+        const mo = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        dateEl.textContent = `AD ${y}-${mo}-${d}`;
+      }
+    };
+    update();
+    clockInterval = setInterval(update, 1000);
+  }
+ 
+  function startStats() {
+    const animateNumber = (id, min, max, isBar) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const val = Math.floor(Math.random() * (max - min) + min);
+      el.textContent = val;
+      if (isBar) {
+        const barId = id.replace('nerv-val-', 'nerv-bar-');
+        const barEl = document.getElementById(barId);
+        if (barEl) barEl.style.width = val + '%';
+      }
+    };
+ 
+    const updateSync = () => {
+      const sync = Math.floor(Math.random() * 25) + 70;
+      const el = document.getElementById('nerv-sync');
+      if (el) {
+        let curr = parseInt(el.textContent) || 0;
+        const step = () => {
+          if (Math.abs(curr - sync) > 1) {
+            curr += curr < sync ? 1 : -1;
+            el.textContent = String(curr).padStart(2, '0');
+            setTimeout(step, 50);
+          }
+        };
+        step();
+      }
+    };
+ 
+    const updateHex = () => {
+      for (let i = 0; i < 8; i++) {
+        const el = document.getElementById(`hex-${i}`);
+        if (el) {
+          el.textContent = Math.floor(Math.random() * 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
         }
+      }
+    };
+ 
+    const updateBars = () => {
+      animateNumber('nerv-val-larm', 75, 95, true);
+      animateNumber('nerv-val-rarm', 72, 92, true);
+      animateNumber('nerv-val-core', 85, 98, true);
+      animateNumber('nerv-val-af', 30, 65, true);
+    };
+ 
+    updateSync();
+    updateBars();
+    updateHex();
+ 
+    statsInterval = setInterval(() => {
+      updateSync();
+      updateBars();
+      updateHex();
+    }, 4000);
+  }
+ 
+  const logMessages = [
+    ['NEURAL INTERFACE: CALIBRATED', ''],
+    ['PATTERN BLUE: NEGATIVE', 'ok'],
+    ['POSITRON RIFLE: CHARGED', 'ok'],
+    ['CORE TEMPERATURE: STABLE', ''],
+    ['LCL INJECTION: COMPLETE', 'ok'],
+    ['AT FIELD STRENGTH: 72%', ''],
+    ['WARNING: UMBILICAL STRESS', 'warn'],
+    ['ANGEL APPROACH VECTOR: NONE', 'ok'],
+    ['SEELE OVERRIDE: BLOCKED', 'warn'],
+    ['SYNC RATIO FLUCTUATION', 'warn'],
+    ['BERSERK MODE: SUPPRESSED', 'warn'],
+    ['CORE BREACH RISK: LOW', ''],
+    ['RESTRAINT BOLTS: SECURE', 'ok'],
+    ['PILOT VITALS: NOMINAL', 'ok'],
+  ];
+ 
+  let logIdx = 0;
+ 
+  function startLog() {
+    logInterval = setInterval(() => {
+      const logEl = document.getElementById('nerv-log');
+      if (!logEl) return;
+ 
+      const msg = logMessages[logIdx % logMessages.length];
+      logIdx++;
+ 
+      const line = document.createElement('div');
+      line.className = `nerv-log-line ${msg[1]}`;
+      line.innerHTML = `<span>▶</span><span>${msg[0]}</span>`;
+      logEl.appendChild(line);
+ 
+      while (logEl.children.length > 7) {
+        logEl.removeChild(logEl.children[0]);
+      }
+    }, 2500);
+  }
+ 
+  function setupCrosshair() {
+    const crosshair = document.getElementById('nerv-crosshair');
+    if (!crosshair) return;
+ 
+    let moveTimeout;
+ 
+    const onMouseMove = (e) => {
+      crosshair.style.left = e.clientX + 'px';
+      crosshair.style.top = e.clientY + 'px';
+      crosshair.classList.add('visible');
+      clearTimeout(moveTimeout);
+      moveTimeout = setTimeout(() => crosshair.classList.remove('visible'), 3000);
+    };
+ 
+    document.addEventListener('mousemove', onMouseMove);
+    crosshair._cleanup = () => document.removeEventListener('mousemove', onMouseMove);
+  }
+ 
+  
+  document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'nerv-close-btn') {
+      deactivateHUD();
     }
-
-    return detected;
-
-
-}
-
-
-function scanPage(){
-    const found = [];
-    const foundNames = new Set();
-
-    for(const api of API_SSIGNATURES){
-        try{
-            if(api.check()){
-                found.push(api);
-                foundNames.add(api.name)
-            }
-        }catch(e) {
-
-        }
-    }
-
-
-    const scriptDetected = detectFromScripts();
-    for(const api of scriptDetected){
-        const baseName = api.name.replace(" (CDN)", "");
-        if(!foundNames.has(baseName) && !foundNames.has(api.name)){
-            found.push(api);
-            foundNames.add(api.name);
-        }
-    }
-    return found;
-}
-
-
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if(request.action === "scanPage"){
-        const results = scanPage();
-        sendResponse({ apis: results });
-    }
-    return true;
-})
+  });
+ 
+})();
