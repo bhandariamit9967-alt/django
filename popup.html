@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>NERV MAGI</title>
+        <link rel="stylesheet" href="popup.css">
+    </head>
+    <body>
+        
+        <div class="header">
+            <svg class="logo" viewBox="0 0 36 36">
+                <polygon points="18,2 34,30 2,30" fill="none" stroke="#FF6600" stroke-width="1.5"/>
+                <circle cx="18" cy="18" r="5" fill="#FF6600" opacity="0.8"/>
+                <circle cx="18" cy="18" r="2.5" fill="#FF4400"/>
+            </svg>
+            <div class="brand">
+                <div class="brand-name">MAGI SYSTEM</div>
+                <div class="brand-sub">SPECIAL AGENCY NERV /// CLASSIFIED</div>
+            </div>
+            <div class="corner-tr"></div>
+        </div>
+        
+<div class="content">
+    
+    <div class="status-row">
+        <div class="dot" id="dot"></div>
+    <span class="status-text" id="statusText">SYSTEM STANDBY // AWAITING PILOT</span>
+  </div>
+
+  <div class="magi-grid">
+      <div class="magi-node">
+      <div class="magi-name">CASPAR</div>
+      <div class="magi-id">MAGI-01</div>
+      <div class="magi-st ok">ONLINE</div>
+    </div>
+    <div class="magi-node">
+        <div class="magi-name">BALTHASAR</div>
+        <div class="magi-id">MAGI-02</div>
+        <div class="magi-st active">ACTIVE</div>
+    </div>
+    <div class="magi-node">
+        <div class="magi-name">MELCHIOR</div>
+      <div class="magi-id">MAGI-03</div>
+      <div class="magi-st ok">ONLINE</div>
+    </div>
+</div>
+
+<div class="sync-panel">
+    <div class="sync-top">
+        <div>
+        <div class="sync-display">
+            <span class="sync-num" id="syncNum">--</span>
+            <span class="sync-pct">%</span>
+        </div>
+        <div class="sync-label">SYNCHRONIZATION RATIO</div>
+    </div>
+    <div class="pilot-info">
+        <div class="pilot-unit">UNIT-01</div>
+        <div class="pilot-name">IKARI</div>
+        <div class="pilot-status">PILOT LINKED</div>
+    </div>
+</div>
+<div class="sync-bar-track">
+    <div class="sync-bar-fill" id="syncFill"></div>
+</div>
+</div>
+
+<div class="section-label">▶ HUD DEPLOYMENT CONTROL</div>
+<button class="activate-btn" id="activateBtn">⬡ ACTIVATE EVA HUD</button>
+
+<div class="section-label">▶ OVERLAY MODE</div>
+<div class="mode-grid">
+    <button class="mode-btn selected" data-mode="full">◈ FULL HUD</button>
+    <button class="mode-btn" data-mode="minimal">◇ MINIMAL</button>
+    <button class="mode-btn" data-mode="warning">⚠ WARNING</button>
+    <button class="mode-btn" data-mode="angel">⬡ ANGEL ALERT</button>
+</div>
+
+<div class="log-box" id="logBox">
+    <div class="log-line ok">▶ MAGI SYSTEM INITIALIZED</div>
+    <div class="log-line">▶ AWAITING SYNCHRONIZATION...</div>
+    <div class="log-line">▶ PILOT STATUS: STANDBY</div>
+</div>
+
+</div>
+
+<div class="footer">
+  <span>NERV HQ // TOKYO-3 // CLASSIFIED</span>
+  <span>ID-04440-01</span>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

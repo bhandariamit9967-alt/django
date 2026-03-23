@@ -1,0 +1,334 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --orange: #FF6600;
+  --green: #00FF41;
+  --yellow: #FFD700;
+  --red: #CC0000;
+  --purple: #550055;
+  --dark: #08000D;
+  --panel: #0D0010;
+  --text: #FF88FF;
+  --dim: #553355;
+}
+
+body {
+  width: 300px;
+  background: var(--dark);
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  color: var(--text);
+  overflow: hidden;
+}
+
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px
+  );
+  pointer-events: none;
+  z-index: 999;
+}
+
+
+.header {
+  background: var(--panel);
+  border-bottom: 2px solid var(--orange);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.logo {
+  width: 34px;
+  height: 34px;
+  filter: drop-shadow(0 0 6px rgba(255,102,0,0.7));
+  flex-shrink: 0;
+}
+
+.brand-name {
+  font-family: 'Orbitron', monospace;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--orange);
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px rgba(255,102,0,0.7);
+}
+
+.brand-sub {
+  font-size: 7px;
+  color: var(--dim);
+  letter-spacing: 1.5px;
+  margin-top: 2px;
+}
+
+.corner-tr {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 14px;
+  height: 14px;
+  border-top: 1px solid var(--orange);
+  border-right: 1px solid var(--orange);
+  opacity: 0.6;
+}
+
+
+.content {
+  padding: 12px 14px;
+}
+
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #220022;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #333;
+  flex-shrink: 0;
+}
+
+.dot.online {
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.dot.warning {
+  background: var(--red);
+  box-shadow: 0 0 6px var(--red);
+  animation: blink 0.5s step-end infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.status-text {
+  font-size: 8px;
+  color: var(--dim);
+  letter-spacing: 1.5px;
+}
+
+
+.magi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.magi-node {
+  background: #0A0014;
+  border: 1px solid #330044;
+  padding: 6px 4px;
+  text-align: center;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
+}
+
+.magi-name {
+  font-size: 6px;
+  color: #664466;
+  letter-spacing: 1px;
+}
+
+.magi-id {
+  font-size: 5px;
+  color: #442244;
+  margin-top: 1px;
+}
+
+.magi-st {
+  font-family: 'Orbitron', monospace;
+  font-size: 7px;
+  font-weight: 700;
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
+.magi-st.ok    { color: var(--green); text-shadow: 0 0 4px var(--green); }
+.magi-st.active { color: var(--orange); text-shadow: 0 0 4px var(--orange); }
+
+
+.sync-panel {
+  background: var(--panel);
+  border: 1px solid var(--purple);
+  padding: 10px;
+  margin-bottom: 10px;
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px);
+}
+
+.sync-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sync-display {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.sync-num {
+  font-family: 'Orbitron', monospace;
+  font-size: 38px;
+  font-weight: 900;
+  color: var(--orange);
+  text-shadow: 0 0 18px rgba(255,102,0,0.7);
+  line-height: 1;
+}
+
+.sync-pct {
+  font-size: 14px;
+  color: #664466;
+}
+
+.sync-label {
+  font-size: 7px;
+  color: var(--dim);
+  letter-spacing: 2px;
+  margin-top: 3px;
+}
+
+.pilot-info { text-align: right; }
+.pilot-unit  { font-size: 8px; color: #664466; letter-spacing: 2px; }
+.pilot-name  { font-family: 'Orbitron', monospace; font-size: 11px; color: #884488; }
+.pilot-status{ font-size: 6px; color: var(--dim); margin-top: 2px; }
+
+.sync-bar-track {
+  height: 4px;
+  background: #1A0018;
+  border: 1px solid #330033;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.sync-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #FF4400, #FF6600, #FFAA00);
+  box-shadow: 0 0 6px var(--orange);
+  transition: width 0.8s ease;
+}
+
+
+.section-label {
+  font-size: 7px;
+  color: #553355;
+  letter-spacing: 2px;
+  margin-bottom: 7px;
+}
+
+
+.activate-btn {
+  width: 100%;
+  padding: 14px;
+  background: #1A0000;
+  border: 2px solid var(--orange);
+  color: var(--orange);
+  font-family: 'Orbitron', monospace;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  transition: all 0.2s;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.activate-btn:hover {
+  background: #300000;
+  box-shadow: 0 0 20px rgba(255,102,0,0.4);
+  text-shadow: 0 0 10px var(--orange);
+}
+
+.activate-btn.on {
+  background: #001A00;
+  border-color: var(--green);
+  color: var(--green);
+  box-shadow: 0 0 16px rgba(0,255,65,0.3);
+}
+
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.mode-btn {
+  padding: 7px 5px;
+  background: #0D0010;
+  border: 1px solid #440044;
+  color: #664466;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-align: left;
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+  transition: all 0.2s;
+}
+
+.mode-btn:hover {
+  border-color: var(--purple);
+  color: var(--text);
+}
+
+.mode-btn.selected {
+  border-color: var(--orange);
+  color: var(--orange);
+  background: #180008;
+}
+
+
+.log-box {
+  background: #050008;
+  border: 1px solid #220022;
+  padding: 8px;
+  max-height: 80px;
+  overflow: hidden;
+}
+
+.log-line {
+  font-size: 8px;
+  color: var(--dim);
+  letter-spacing: 1px;
+  line-height: 1.9;
+}
+
+.log-line.ok    { color: var(--green); }
+.log-line.warn  { color: var(--yellow); }
+.log-line.alert { color: var(--red); }
+
+
+.footer {
+  border-top: 1px solid #220022;
+  padding: 7px 14px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 7px;
+  color: #330033;
+}
