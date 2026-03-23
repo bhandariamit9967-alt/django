@@ -1,34 +1,12 @@
 {
   "manifest_version": 3,
   "name": "NERV MAGI Interface",
-  "version": "1.0.0",
-  "description": "Transform any webpage into a Neon Genesis Evangelion NERV HUD overlay. EVANGELION UNIT-01 ACTIVATED.",
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "storage"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
-  "action": {
-    "default_popup": "popup.html"
-    
-  },
-  "content_scripts": [],
+  "version": "4.0.0",
+  "description": "Evangelion HUD overlay for any webpage.",
+  "permissions": ["activeTab", "scripting", "tabs"],
+  "host_permissions": ["<all_urls>"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "bg.js"
   },
-  
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "content.css",
-        "content.js"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
-    }
-  ]
+  "action": {}
 }
